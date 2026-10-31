@@ -1,0 +1,68 @@
+PROGRAM LOG_ALL
+
+%NOLOCKGROUP
+%COMMENT = 'Logger v9: ido, J1-J6, XYZWPR'
+
+VAR
+  jpos                  : JOINTPOS
+  q                     : ARRAY[9] OF REAL
+  cpos                  : XYZWPR
+  t_old, t_new, dt_tick : INTEGER
+  t_sec                 : REAL
+  file_var              : FILE
+  status                : INTEGER
+  flag_val              : INTEGER
+  loop_count            : INTEGER
+
+BEGIN
+  loop_count = 0
+  t_sec      = 0.0
+
+  OPEN FILE file_var ('RW', 'UD1:K1.CSV')
+  status = IO_STATUS(file_var)
+  IF status <> 0 THEN
+    WRITE ('HIBA a fajlnyitasnal. IO status: ', status, CR)
+    GOTO prog_vege
+  ENDIF
+
+  WRITE file_var('Time_s;J1;J2;J3;J4;J5;J6;X;Y;Z;W;P;R', CR)
+
+  t_old = $FAST_CLOCK
+
+  GET_PORT_VAL(35, 1, flag_val, status)
+
+  WHILE flag_val = 1 DO
+
+    DELAY 10
+
+    jpos = CURJPOS(0, 0, 1)
+    CNV_JPOS_REL(jpos, q, status)
+    cpos = CURPOS(0, 0, 1)
+    t_new = $FAST_CLOCK
+
+    dt_tick = t_new - t_old
+    IF dt_tick < 0 THEN
+      dt_tick = dt_tick + 2147483647
+    ENDIF
+    IF dt_tick > 0 THEN
+      t_sec = t_sec + dt_tick * 0.002
+      t_old = t_new
+
+      WRITE file_var(t_sec::10::4, ';', &
+                     q[1]::10::4, ';', q[2]::10::4, ';', q[3]::10::4, ';', &
+                     q[4]::10::4, ';', q[5]::10::4, ';', q[6]::10::4, ';', &
+                     cpos.x::10::4, ';', cpos.y::10::4, ';', cpos.z::10::4, ';', &
+                     cpos.w::10::4, ';', cpos.p::10::4, ';', cpos.r::10::4, CR)
+
+      loop_count = loop_count + 1
+    ENDIF
+
+    GET_PORT_VAL(35, 1, flag_val, status)
+
+  ENDWHILE
+
+  CLOSE FILE file_var
+  WRITE ('Meres kesz. Sorok szama: ', loop_count, CR)
+
+prog_vege::
+END LOG_ALL

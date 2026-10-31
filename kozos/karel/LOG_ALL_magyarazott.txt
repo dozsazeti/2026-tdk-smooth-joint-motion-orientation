@@ -1,0 +1,125 @@
+-- =====================================================================
+--  LOG_ALL  -  MAGYARAZOTT VALTOZAT (dokumentacio)
+--  A vezerlore a LOG_ALL.txt megy: ugyanaz a program, kommentek nelkul.
+--  Ezt a fajlt nem kell betolteni, a mukodes megertesehez keszult.
+--
+--  MIT CSINAL?
+--    Hatterben futo adatgyujto (logger). Az LS program inditja:
+--        F[1]=(ON) ; WAIT .10 ; RUN LOG_ALL ; WAIT .20 ; J P[1] ... L P[i] ...
+--        ... WAIT .10 ; F[1]=(OFF)
+--    A RUN (nem CALL) KULON TASZKKENT inditja, igy a mozgassal
+--    parhuzamosan fut. Addig mintavetelez, amig F[1] = ON.
+--
+--  MIT IR KI (UD1:K1.CSV, pontosvesszovel, 13 oszlop):
+--      Time_s        ido az elso mintatol [s] ($FAST_CLOCK * 0.002 s)
+--      J1..J6        csukloszogek [fok]
+--      X Y Z W P R   a TCP helyzete az AKTIV UFRAME/UTOOL-ban
+--                    (meres elott UF 0 / UT 3 legyen aktiv -> a megfogo vege)
+--    Amit a MATLAB-kiertekeles hasznal belole:
+--      Time_s, J1..J6  ivhossz es ido szerinti derivalt, csuklosebesseg-teszt
+--      X, Y            a palyaszog szamolasa, a kor kijelolese (log_beolvas.m)
+--      X, Y, Z, Time_s a palyasebesseg (v_TCP) szamolasa (log_beolvas.m)
+--      Z, W, P, R      a programozott pontoktol valo palyaelteres vizsgalata
+--                      (a kiserletekben)
+--    A csuklosebesseget, gyorsulast es jerket a logger nem szamolja, ezeket
+--    a MATLAB a J1..J6 es Time_s oszlopokbol allitja elo.
+--
+--  KIIRASI FORMATUM: fix 4 tizedes (::10::4). Ez 0,0001 fokos felbontas,
+--    ami a 32 bites REAL (kb. 7 ertekes jegy) pontossagahoz illik. Az
+--    alapertelmezett exponencialis kiiras (6 ertekes jegy) 100 fok felett
+--    csak 0,001 fokos felbontast adna, ami a harmadik derivaltat zajossa tenne.
+--
+--  MINTAVETELEZES: DELAY 10 (ms), a vezerlo ezt az interpolacios ciklus
+--    egesz tobbszorosere kerekiti -> a tenyleges lepes kb. 16 ms, neha 24 ms.
+--
+--  IDOMERES: 1 $FAST_CLOCK tick = 2 ms; a RoboGuide profilerrel
+--    osszevetve kb. +-2%-on belul egyezik.
+--
+--  Forditashoz: LOG_ALL.kl neven (a PROGRAM neve LOG_ALL).
+--  A kommentek szandekosan ekezet nelkuliek (a KAREL fordito ANSI-t var).
+-- =====================================================================
+PROGRAM LOG_ALL
+
+-- %NOLOCKGROUP: a logger NEM foglalja le a mozgascsoportot (azt a mozgo
+-- LS program birtokolja). A logger csak olvas.
+%NOLOCKGROUP
+%COMMENT = 'Logger v9: ido, J1-J6, XYZWPR'
+
+VAR
+  jpos                  : JOINTPOS          -- aktualis csuklopozicio
+  q                     : ARRAY[9] OF REAL  -- ugyanez valos tombkent [fok]
+                                            -- (a CNV_JPOS_REL max. 9 tengelyt ad)
+  cpos                  : XYZWPR            -- aktualis TCP (aktiv UF/UT)
+  t_old, t_new, dt_tick : INTEGER           -- $FAST_CLOCK ertekek, kulonbseg
+  t_sec                 : REAL              -- eltelt ido [s]
+  file_var              : FILE
+  status                : INTEGER
+  flag_val              : INTEGER           -- F[1] aktualis erteke (0/1)
+  loop_count            : INTEGER           -- kiirt sorok szama
+
+BEGIN
+  loop_count = 0
+  t_sec      = 0.0
+
+  -- 1) FAJL: 'RW' = uj fajl / feluliras, igy minden futas tiszta K1.CSV-t ad.
+  OPEN FILE file_var ('RW', 'UD1:K1.CSV')
+  status = IO_STATUS(file_var)
+  IF status <> 0 THEN
+    WRITE ('HIBA a fajlnyitasnal. IO status: ', status, CR)
+    GOTO prog_vege
+  ENDIF
+
+  -- Fejlec: a log_beolvas.m ez alapjan keresi az oszlopokat.
+  WRITE file_var('Time_s;J1;J2;J3;J4;J5;J6;X;Y;Z;W;P;R', CR)
+
+  -- 2) IDO: $FAST_CLOCK tick, 1 tick = 2 ms (a RoboGuide profilerrel
+  --    ellenorizve, kb. +-2%-on belul).
+  t_old = $FAST_CLOCK
+
+  -- F[1] beolvasasa: 35 = flag port tipus, 1 = F[1].
+  GET_PORT_VAL(35, 1, flag_val, status)
+
+  -- 3) MINTAVETELEZO CIKLUS, amig F[1] = ON
+  WHILE flag_val = 1 DO
+
+    DELAY 10    -- ms; a gyakorlatban kb. 16 ms
+
+    -- Aktualis allapot: csukloszogek, TCP, ido.
+    -- CURJPOS/CURPOS(maszk, maszk, csoport): az 1. mozgascsoport.
+    jpos = CURJPOS(0, 0, 1)
+    CNV_JPOS_REL(jpos, q, status)
+    cpos = CURPOS(0, 0, 1)
+    t_new = $FAST_CLOCK
+
+    -- Eltelt ido; ora-atfordulas eseten (tobb het folyamatos futas utan)
+    -- korrekcio. Egy meresnel ez nem fordul elo.
+    dt_tick = t_new - t_old
+    IF dt_tick < 0 THEN
+      dt_tick = dt_tick + 2147483647
+    ENDIF
+    -- Csak uj idopillanatot irunk ki (ket azonos idobelyeg a MATLAB-ban
+    -- az ido szerinti interpolaciot elrontana).
+    IF dt_tick > 0 THEN
+      t_sec = t_sec + dt_tick * 0.002
+      t_old = t_new
+
+      -- Kiiras: ::szelesseg::tizedes, fix 4 tizedes.
+      WRITE file_var(t_sec::10::4, ';', &
+                     q[1]::10::4, ';', q[2]::10::4, ';', q[3]::10::4, ';', &
+                     q[4]::10::4, ';', q[5]::10::4, ';', q[6]::10::4, ';', &
+                     cpos.x::10::4, ';', cpos.y::10::4, ';', cpos.z::10::4, ';', &
+                     cpos.w::10::4, ';', cpos.p::10::4, ';', cpos.r::10::4, CR)
+
+      loop_count = loop_count + 1
+    ENDIF
+
+    -- Flag ujraolvasasa: ha az LS F[1]=(OFF)-ot allit, kilepunk.
+    GET_PORT_VAL(35, 1, flag_val, status)
+
+  ENDWHILE
+
+  CLOSE FILE file_var
+  WRITE ('Meres kesz. Sorok szama: ', loop_count, CR)
+
+prog_vege::
+END LOG_ALL
