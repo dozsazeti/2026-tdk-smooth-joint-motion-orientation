@@ -1,0 +1,3 @@
+0 = ref  (04_roboguide_osszevetes\roboguide_log\alap.CSV)
+1 = opt1  (04_roboguide_osszevetes\roboguide_log\opt1.CSV)
+2 = opt2  (04_roboguide_osszevetes\roboguide_log\opt2.CSV)

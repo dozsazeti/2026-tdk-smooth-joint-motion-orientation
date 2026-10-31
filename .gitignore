@@ -1,0 +1,25 @@
+# Nagy, újragenerálható köztes fájlok
+# (az r1_cand_generalas, r2_cand2_osszefuz és k1_cand_generalas újra előállítja őket)
+01_racs/roboguide_be/CAND.TXT
+01_racs/roboguide_be/CAND.csv
+01_racs/CAND2.csv
+01_racs/CAND2.zip
+03_kor2_finom/roboguide_be/CAND.TXT
+03_kor2_finom/roboguide_be/CAND.csv
+kiserletek/03_fourier_harmonikusok/kor2/roboguide_be/CAND.TXT
+kiserletek/03_fourier_harmonikusok/kor2/roboguide_be/CAND.csv
+kiserletek/08_harmonikus_tartomany/racs/CAND2.csv
+kiserletek/08_harmonikus_tartomany/racs/CAND2.zip
+
+# MATLAB automatikus mentések
+*.asv
+*.m~
+
+# Áthelyezett kör (valós futtatás): ugyanúgy újragenerálható köztes fájlok
+valos_futtatas/02_rezges_athelyezett/racs/roboguide_be/CAND.TXT
+valos_futtatas/02_rezges_athelyezett/racs/roboguide_be/CAND.csv
+valos_futtatas/02_rezges_athelyezett/racs/CAND2.csv
+
+# Nyers rezgésmérési fájlok (mérésenként ~20 MB, összesen ~0,9 GB), a méret miatt nincsenek a tárolóban
+valos_futtatas/02_rezges_athelyezett/mert_adatok/*.zip
+valos_futtatas/02_rezges_athelyezett/mert_adatok/*/test_*.csv

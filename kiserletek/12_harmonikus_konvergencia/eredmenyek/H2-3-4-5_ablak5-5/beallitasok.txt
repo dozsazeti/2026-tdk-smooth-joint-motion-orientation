@@ -1,0 +1,6 @@
+Kiserlet 12, futas: H2-3-4-5_ablak5-5
+H lista: 2  3  4  5 (az elso a fo futas opt1-e)
+ablak: regi egyutthatok +-5 fok, uj harmonikus +-5 fok
+abszolut korlat: a0 +-40, harmonikusok +-25 fok
+GA: n_starts 8, pop 150, max_gen 300, stall 50, elite 3, tour_k 3, p_mut 0.15, seed 1
+koltseg: norm korlat, lambda [0.2         0.3         0.5], Alap = 1.000000

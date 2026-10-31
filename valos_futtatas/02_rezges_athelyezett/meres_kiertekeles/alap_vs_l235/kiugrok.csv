@@ -1,0 +1,10 @@
+irany,valtozat,rms_alap,rms_l235,l235_vs_alap_pct
+alap,eredeti,0.0135542,0.0145949,7.68
+alap,saját kiugrók átlaggal,0.0134191,0.0140158,4.45
+alap,közös szögek átlaggal,0.0133612,0.0139576,4.46
+x,eredeti,0.0322944,0.0334283,3.51
+x,saját kiugrók átlaggal,0.0310799,0.0234848,-24.44
+x,közös szögek átlaggal,0.0301527,0.0234531,-22.22
+y,eredeti,0.0245672,0.0227766,-7.29
+y,saját kiugrók átlaggal,0.0245672,0.0206228,-16.06
+y,közös szögek átlaggal,0.024045,0.0206228,-14.23

@@ -1,0 +1,6 @@
+0 = alap  (ls_karel\log\RAK_ALAP.CSV)
+1 = l235  (ls_karel\log\RAK_235.CSV)
+2 = l100  (ls_karel\log\RAK_100.CSV)
+3 = l010  (ls_karel\log\RAK_010.CSV)
+4 = l001  (ls_karel\log\RAK_001.CSV)
+5 = l055  (ls_karel\log\RAK_055.CSV)

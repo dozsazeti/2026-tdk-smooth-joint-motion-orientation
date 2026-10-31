@@ -1,0 +1,12 @@
+1: alap CNT1 (új)  kiserletek\04_cnt\roboguide_log\alap_c001.CSV
+2: opt1 CNT1 (új)  kiserletek\04_cnt\roboguide_log\opt1_c001.CSV
+3: alap CNT25 (új)  kiserletek\04_cnt\roboguide_log\alap_c025.CSV
+4: opt1 CNT25 (új)  kiserletek\04_cnt\roboguide_log\opt1_c025.CSV
+5: alap CNT50 (új)  kiserletek\04_cnt\roboguide_log\alap_c050.CSV
+6: opt1 CNT50 (új)  kiserletek\04_cnt\roboguide_log\opt1_c050.CSV
+7: alap CNT75 (új)  kiserletek\04_cnt\roboguide_log\alap_c075.CSV
+8: opt1 CNT75 (új)  kiserletek\04_cnt\roboguide_log\opt1_c075.CSV
+9: alap CNT100 (új)  kiserletek\04_cnt\roboguide_log\alap_c100.CSV
+10: alap CNT100 (eredeti)  04_roboguide_osszevetes\roboguide_log\alap.CSV
+11: opt1 CNT100 (új)  kiserletek\04_cnt\roboguide_log\opt1_c100.CSV
+12: opt1 CNT100 (eredeti)  04_roboguide_osszevetes\roboguide_log\opt1.CSV

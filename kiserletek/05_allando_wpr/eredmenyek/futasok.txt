@@ -1,0 +1,5 @@
+eset 0 = Alap  (04_roboguide_osszevetes\roboguide_log\alap.CSV)
+eset 1 = konst1  (kiserletek\05_allando_wpr\roboguide_log\konst1.CSV)
+eset 2 = konst2  (kiserletek\05_allando_wpr\roboguide_log\konst2.CSV)
+eset 3 = opt1  (04_roboguide_osszevetes\roboguide_log\opt1.CSV)
+eset 4 = opt2  (04_roboguide_osszevetes\roboguide_log\opt2.CSV)

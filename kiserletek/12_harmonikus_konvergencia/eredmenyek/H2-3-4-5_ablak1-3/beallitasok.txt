@@ -1,0 +1,9 @@
+Kiserlet 12, futas: H2-3-4-5_ablak1-3
+H lista: 2  3  4  5 (H = 2: a fo futas opt1-enek finomitasa)
+GA leallas: stall_gen = 300 (teljes futas)
+letapogatas: +-2 fok, 0.1 fokos lepes
+fo futas opt1 koltsege: 0.538696
+ablak: regi egyutthatok +-1 fok, uj harmonikus +-3 fok
+abszolut korlat: a0 +-40, harmonikusok +-25 fok
+GA: n_starts 8, pop 150, max_gen 300, stall 300, elite 3, tour_k 3, p_mut 0.15, seed 1
+koltseg: norm korlat, lambda [0.2         0.3         0.5], Alap = 1.000000

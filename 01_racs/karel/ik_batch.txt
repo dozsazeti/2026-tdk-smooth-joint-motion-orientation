@@ -1,0 +1,111 @@
+-- =====================================================================
+--  ik_batch  -  RoboGuide inverz kinematika a jeloltfajl minden sorara
+--  Fajlnev a forditashoz: ik_batch.kl (a PROGRAM neve ik_batch).
+--
+--  MIT CSINAL?
+--    Soronkent beolvas egy Descartes-pozt (X Y Z W P R) a jeloltfajlbol,
+--    megnezi, hogy a robot el tudja-e erni a rogzitett konfiguracios agban
+--    ('N U T, 0, 0, 0'), es ha igen, kiszamolja a hozza tartozo J1..J6
+--    csukloszogeket a vezerlo sajat inverz kinematikajaval. Igy a MATLAB-os
+--    GA pontosan azokkal a csukloszogekkel dolgozik, amelyeket a vezerlo
+--    is hasznalna.
+--
+--  Bemenet : UD1:CAND.TXT   - szokozzel tagolt sorok:  i k X Y Z W P R
+--            i = kulcspont sorszama, k = jelolt sorszama a kulcsponton belul,
+--            X Y Z [mm], W P R [fok] = a robotnak szolo orientacio
+--            (01_racs\r1_cand_generalas, ill. 03_kor2_finom\k1_cand_generalas irja)
+--  Kimenet : UD1:JOINTS.CSV - idx,k,J1..J6,status
+--            status = 0: sikeres, -1: nem elerheto (ekkor J1..J6 = 0)
+--
+--  FRAME-EK: UFRAME 0 (vilag) es UTOOL 3 (megfogo), ugyanaz, mint a valos
+--    roboton. A szerszam szamat az UT_NUM konstans adja; masik szerszamnal
+--    ezt kell atirni (es a kozos\config.m cfg.tool.num-jat is).
+--
+--  A kommentek szandekosan ekezet nelkuliek (a KAREL fordito ANSI-t var).
+-- =====================================================================
+PROGRAM ik_batch
+%COMMENT = 'IK Batch v9'
+%NOPAUSE = ERROR + TPENABLE
+%NOABORT = ERROR
+
+CONST
+  UT_NUM = 3                       -- tool frame sorszama (UT 3 = megfogo)
+
+VAR
+  fin, fout : FILE
+  idx, k, st, chk_st : INTEGER
+  x, y, z, w, p, r : REAL
+  xp : XYZWPR
+  jp : JOINTPOS
+  cfg : CONFIG
+  a : ARRAY[6] OF REAL
+  uframe_pos, utool_pos : POSITION
+  reach_cnt, unreach_cnt : INTEGER
+
+BEGIN
+  -- 1) KONFIGURACIO: 'N U T, 0, 0, 0' (ugyanaz, mint az LS pontokban)
+  CNV_STR_CONF('N U T, 0, 0, 0', cfg, st)
+
+  -- 2) FRAME-EK
+  --    UF 0 = vilag: a user frame az egysegtranszformacio (minden 0).
+  --    UT UT_NUM: a vezerlon beallitott tool frame ($MNUTOOL[csoport, sorszam]).
+  uframe_pos = POS(0, 0, 0, 0, 0, 0, cfg)
+  utool_pos  = $MNUTOOL[1, UT_NUM]
+  $GROUP[1].$UFRAME = uframe_pos
+  $GROUP[1].$UTOOL  = utool_pos
+
+  reach_cnt   = 0
+  unreach_cnt = 0
+
+  -- 3) FAJLOK
+  OPEN FILE fin ('RO', 'UD1:CAND.TXT')
+  st = IO_STATUS(fin)
+  IF st <> 0 THEN
+    WRITE TPERROR('Nem nyithato: UD1:CAND.TXT, st=', st, CR)
+    RETURN
+  ENDIF
+
+  OPEN FILE fout ('RW', 'UD1:JOINTS.CSV')
+  st = IO_STATUS(fout)
+  IF st <> 0 THEN
+    CLOSE FILE fin
+    WRITE TPERROR('Nem nyithato: UD1:JOINTS.CSV, st=', st, CR)
+    RETURN
+  ENDIF
+
+  WRITE fout ('idx,k,J1,J2,J3,J4,J5,J6,status', CR)
+  DELAY 1
+
+  -- 4) SORONKENT: olvasas CR nelkul (egy READ = egy sor 8 szama)
+  READ fin (idx, k, x, y, z, w, p, r)
+  WHILE IO_STATUS(fin) = 0 DO
+    xp = POS(x, y, z, w, p, r, cfg)
+
+    -- 5) ELERHETOSEG az adott frame-ekkel es konfiguracioval
+    CHECK_EPOS(xp, uframe_pos, utool_pos, chk_st, 1)
+
+    IF chk_st <> 0 THEN
+      unreach_cnt = unreach_cnt + 1
+      WRITE fout (idx, ',', k, ',',
+                  0.000::8::3, ',', 0.000::8::3, ',', 0.000::8::3, ',',
+                  0.000::8::3, ',', 0.000::8::3, ',', 0.000::8::3, ',',
+                  -1, CR)
+    ELSE
+      -- 6) INVERZ KINEMATIKA (XYZWPR -> JOINTPOS a $UFRAME/$UTOOL szerint)
+      jp = xp
+      CNV_JPOS_REL(jp, a, st)
+      reach_cnt = reach_cnt + 1
+      WRITE fout (idx, ',', k, ',', a[1]::8::3, ',', a[2]::8::3, ',',
+                  a[3]::8::3, ',', a[4]::8::3, ',', a[5]::8::3, ',',
+                  a[6]::8::3, ',', st, CR)
+    ENDIF
+
+    READ fin (idx, k, x, y, z, w, p, r)
+  ENDWHILE
+
+  CLOSE FILE fin
+  CLOSE FILE fout
+
+  WRITE TPDISPLAY('IK BATCH KESZ! elerheto=', reach_cnt,
+                   ' nem elerheto=', unreach_cnt, CR)
+END ik_batch

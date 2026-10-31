@@ -1,0 +1,74 @@
+-- =====================================================================
+--  PARAM_LEK  -  csuklonkenti mozgasparameterek kiolvasasa
+--
+--  MIT CSINAL?
+--    A vezerlo rendszervaltozoibol (system variables) kiolvassa az
+--    1. mozgascsoport (a robot) J1..J6 tengelyenek:
+--      $PARAM_GROUP[1].$JNTVELLIM[i]    csuklo sebessegkorlat [fok/s]
+--      $PARAM_GROUP[1].$ACCEL_TIME1[i]  1. gyorsitasi idoallando [ms]
+--      $PARAM_GROUP[1].$ACCEL_TIME2[i]  2. gyorsitasi idoallando [ms]
+--    es kiirja a UD1:PARAM.CSV fajlba (pontosvesszovel tagolva),
+--    valamint a USER kepernyore.
+--
+--  MEGJEGYZES:
+--    Ha valamelyik rendszervaltozo nem letezik vagy mas a tipusa, a GET_VAR
+--    status <> 0 lesz; ezt a program kiirja (a fajlban a status oszlopban).
+--    Ilyenkor a vezerlon MENU > NEXT > SYSTEM > Variables > $PARAM_GROUP[1]
+--    alatt ellenorizheto a helyes nev.
+--    A GET_VAR rendszervaltozohoz a prog_name = '*SYSTEM*' (KAREL Reference
+--    Manual, A.8.27).
+--
+--  Forditashoz: mentsd PARAM_LEK.kl neven.
+--  A kommentek szandekosan ekezet nelkuliek (a KAREL fordito ANSI-t var).
+-- =====================================================================
+PROGRAM PARAM_LEK
+
+%NOLOCKGROUP
+%COMMENT = 'Csuklo seb.korlat es gyorsitasi idok'
+
+VAR
+  file_var  : FILE
+  entry     : INTEGER
+  st_v, st_a1, st_a2 : INTEGER      -- GET_VAR statuszok
+  vlim      : REAL                  -- sebessegkorlat [fok/s]
+  acc1, acc2 : INTEGER              -- gyorsitasi idok [ms]
+  i, status : INTEGER
+  idx       : STRING[1]
+  vname     : STRING[60]
+
+BEGIN
+  OPEN FILE file_var ('RW', 'UD1:PARAM.CSV')
+  status = IO_STATUS(file_var)
+  IF status <> 0 THEN
+    WRITE ('HIBA a fajlnyitasnal. IO status: ', status, CR)
+    GOTO prog_vege
+  ENDIF
+
+  WRITE file_var('Tengely;JNTVELLIM_fok_s;st;ACCEL_TIME1_ms;st;ACCEL_TIME2_ms;st', CR)
+
+  FOR i = 1 TO 6 DO
+    idx = SUB_STR('123456', i, 1)
+    vlim = 0.0
+    acc1 = 0
+    acc2 = 0
+
+    vname = '$PARAM_GROUP[1].$JNTVELLIM[' + idx + ']'
+    GET_VAR(entry, '*SYSTEM*', vname, vlim, st_v)
+
+    vname = '$PARAM_GROUP[1].$ACCEL_TIME1[' + idx + ']'
+    GET_VAR(entry, '*SYSTEM*', vname, acc1, st_a1)
+
+    vname = '$PARAM_GROUP[1].$ACCEL_TIME2[' + idx + ']'
+    GET_VAR(entry, '*SYSTEM*', vname, acc2, st_a2)
+
+    WRITE file_var('J', idx, ';', vlim::10::3, ';', st_v, ';', &
+                   acc1, ';', st_a1, ';', acc2, ';', st_a2, CR)
+    WRITE ('J', idx, ' v=', vlim::8::2, ' T1=', acc1, ' T2=', acc2, &
+           ' st=', st_v, st_a1, st_a2, CR)
+  ENDFOR
+
+  CLOSE FILE file_var
+  WRITE ('Kesz: UD1:PARAM.CSV', CR)
+
+prog_vege::
+END PARAM_LEK
