@@ -1,0 +1,3 @@
+0 = referencia  (C:\Users\dozsa\OneDrive\Desktop\ATMENETIBME\5_felev\tdk\01_v10\04_roboguide_osszevetes\roboguide_log\alap.CSV)
+1 = opt1  (C:\Users\dozsa\OneDrive\Desktop\ATMENETIBME\5_felev\tdk\01_v10\04_roboguide_osszevetes\roboguide_log\opt1.CSV)
+2 = opt2  (C:\Users\dozsa\OneDrive\Desktop\ATMENETIBME\5_felev\tdk\01_v10\04_roboguide_osszevetes\roboguide_log\opt2.CSV)
